@@ -233,10 +233,10 @@ class ImageFolderDataset(Dataset):
         # with self._open_file(fname) as f:
         image_s = np.array(PIL.Image.open(os.path.join(self._path, source))).transpose(2, 0, 1)
         image_t = np.array(PIL.Image.open(os.path.join(self._path, target))).transpose(2, 0, 1)
-        ap_s = np.array(PIL.Image.open(os.path.join(self._path, source[:-4]+ '_iuv.jpg'))).transpose(2, 0, 1)
-        ap_t = np.array(PIL.Image.open(os.path.join(self._path, target[:-4] + '_iuv.jpg'))).transpose(2, 0, 1)
-        pose_s = np.array(PIL.Image.open(os.path.join(self._path, source[:-4] + '_pose.jpg'))).transpose(2, 0, 1)
-        pose_t = np.array(PIL.Image.open(os.path.join(self._path, target[:-4] + '_pose.jpsg'))).transpose(2, 0, 1)
+        ap_s = np.array(PIL.Image.open(os.path.join(self._path, source[:-4]+ '_iuv.png'))).transpose(2, 0, 1)
+        ap_t = np.array(PIL.Image.open(os.path.join(self._path, target[:-4] + '_iuv.png'))).transpose(2, 0, 1)
+        pose_s = np.array(PIL.Image.open(os.path.join(self._path, source[:-4] + '_pose.png'))).transpose(2, 0, 1)
+        pose_t = np.array(PIL.Image.open(os.path.join(self._path, target[:-4] + '_pose.png'))).transpose(2, 0, 1)
         
         image_s = cv2.resize(image_s, (512, 512)) # Assigning resolution
         image_t = cv2.resize(image_t, (512, 512)) # Assigning resolution
