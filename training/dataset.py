@@ -14,6 +14,7 @@ import PIL.Image
 import json
 import torch
 import dnnlib
+import cv2
 import pandas as pd
 
 try:
@@ -85,14 +86,20 @@ class Dataset(torch.utils.data.Dataset):
         return self._raw_idx.size
 
     def __getitem__(self, idx):
-        image = self._load_raw_image(self._raw_idx[idx])
-        assert isinstance(image, np.ndarray)
-        assert list(image.shape) == self.image_shape
-        assert image.dtype == np.uint8
-        if self._xflip[idx]:
-            assert image.ndim == 3 # CHW
-            image = image[:, :, ::-1]
-        return image.copy(), self.get_label(idx)
+        image_s, image_t, ap_s, ap_t, pose_s, pose_t = self._load_raw_image(self._raw_idx[idx])
+        assert isinstance(image_s, np.ndarray) and image_s.dtype == np.uint8
+        assert isinstance(image_t, np.ndarray) and image_t.dtype == np.uint8
+        assert isinstance(ap_s, np.ndarray)
+        assert isinstance(ap_t, np.ndarray)
+        assert isinstance(pose_s, np.ndarray)
+        assert isinstance(pose_t, np.ndarray)
+        assert list(image_s.shape) == self.image_shape
+        # assert image.dtype == np.uint8
+        # if self._xflip[idx]:
+        #     assert image.ndim == 3 # CHW
+        #     image = image[:, :, ::-1]
+
+        return image_s.copy(), image_t.copy(), ap_s.copy(), ap_t.copy(), pose_s.copy(), pose_t.copy(), self.get_label(idx)
 
     def get_label(self, idx):
         label = self._get_raw_labels()[self._raw_idx[idx]]
@@ -183,7 +190,7 @@ class ImageFolderDataset(Dataset):
             raise IOError('No image files found in the specified path')
 
         name = os.path.splitext(os.path.basename(self._path))[0]
-        raw_shape = [len(self._image_fnames)] + list(self._load_raw_image(0)[0].shape)
+        raw_shape = [len(self.pairs)] + list(self._load_raw_image(0)[0].shape)
         if resolution is not None and (raw_shape[2] != resolution or raw_shape[3] != resolution):
             raise IOError('Image files do not match the specified resolution')
         super().__init__(name=name, raw_shape=raw_shape, **super_kwargs)
@@ -226,10 +233,16 @@ class ImageFolderDataset(Dataset):
         # with self._open_file(fname) as f:
         image_s = np.array(PIL.Image.open(os.path.join(self._path, source))).transpose(2, 0, 1)
         image_t = np.array(PIL.Image.open(os.path.join(self._path, target))).transpose(2, 0, 1)
-        ap_s = np.array(PIL.Image.open(os.path.join(self._path, source[:-4]+ '_texturemap.jpg'))).transpose(2, 0, 1)
-        ap_t = np.array(PIL.Image.open(os.path.join(self._path, target[:-4] + '_texturemap.jpg'))).transpose(2, 0, 1)
+        ap_s = np.array(PIL.Image.open(os.path.join(self._path, source[:-4]+ '_iuv.jpg'))).transpose(2, 0, 1)
+        ap_t = np.array(PIL.Image.open(os.path.join(self._path, target[:-4] + '_iuv.jpg'))).transpose(2, 0, 1)
         pose_s = np.array(PIL.Image.open(os.path.join(self._path, source[:-4] + '_pose.jpg'))).transpose(2, 0, 1)
         pose_t = np.array(PIL.Image.open(os.path.join(self._path, target[:-4] + '_pose.jpsg'))).transpose(2, 0, 1)
+        
+        image_s = cv2.resize(image_s, (512, 512)) # Assigning resolution
+        image_t = cv2.resize(image_t, (512, 512)) # Assigning resolution
+        pose_s = cv2.resize(pose_s, (512, 512)) # Assigning resolution
+        pose_t = cv2.resize(pose_t, (512, 512)) # Assigning resolution
+
         # if image.ndim == 2:
         #     image = image[:, :, np.newaxis] # HW => HWC
         # image = image.transpose(2, 0, 1) # HWC => CHW
