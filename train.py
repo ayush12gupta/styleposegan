@@ -114,7 +114,8 @@ def setup_training_loop_kwargs(
         desc = training_set.name
         del training_set # conserve memory
     except IOError as err:
-        raise UserError(f'--data: {err}')
+        print("Error")
+        # raise UserError(f'--data: {err}')
 
     if cond is None:
         cond = False
