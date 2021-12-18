@@ -173,6 +173,7 @@ class ImageFolderDataset(Dataset):
             print("Checking if valid dataset dir")
             self._type = 'dir'
             pair_csv = glob.glob(self._path + '/*.csv')[0]
+            print(pair_csv)
             df = pd.read_csv(pair_csv)
             source = df['source'].tolist()
             target = df['target'].tolist()
