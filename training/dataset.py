@@ -170,6 +170,7 @@ class ImageFolderDataset(Dataset):
         self._zipfile = None
 
         if os.path.isdir(self._path):
+            print("Checking if valid dataset dir")
             self._type = 'dir'
             pair_csv = glob.glob(self._path + '/*.csv')[0]
             df = pd.read_csv(pair_csv)
