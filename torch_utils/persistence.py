@@ -246,6 +246,6 @@ def _check_pickleable(obj):
             return None # Persistent objects are pickleable, by virtue of the constructor check.
         return obj
     with io.BytesIO() as f:
-        pickle.dump(recurse(obj), f)
+        pickle.dump(recurse(obj), f, protocol=4)
 
 #----------------------------------------------------------------------------
