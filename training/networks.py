@@ -495,7 +495,6 @@ class SynthesisBlock(torch.nn.Module):
         # Input.
         if self.in_channels == 0:
             x = x.to(dtype=dtype, memory_format=memory_format)
-            print(x.size(), ws.size())
             # x = x.unsqueeze(0).repeat([ws.shape[0], 1, 1, 1])
         else:
             misc.assert_shape(x, [None, self.in_channels, self.resolution // 2, self.resolution // 2])
@@ -596,7 +595,6 @@ class Generator(torch.nn.Module):
     ):
         super().__init__()
         self.z_dim = z_dim
-        print(self.z_dim, "!!!!")
         self.c_dim = c_dim
         self.w_dim = w_dim
         self.img_resolution = img_resolution
