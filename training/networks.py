@@ -321,15 +321,34 @@ class PNet(torch.nn.Module):
         return out
 
 class ANet(torch.nn.Module):
-    def __init__(self, out_channels=2048):
+    def __init__(self, block=ResidualBlock, out_channels=512, layers=[2,2]):
         super().__init__()
         self.layer1 = PNet()
+        self.in_channels = 512
         self.relu = torch.nn.ReLU(inplace=True)
-        self.fc1 = torch.nn.Linear(512*16*16, 512*16)
-        self.fc2 = torch.nn.Linear(512*16, out_channels)
+        self.fc1 = torch.nn.Linear(256*8*8, 512*8)
+        self.fc2 = torch.nn.Linear(512*8, out_channels)
+        self.layer2 = self.make_layer(block, 512, layers[0], 2)
+        self.layer3 = self.make_layer(block, 256, layers[1], 2)
+
+    def make_layer(self, block, out_channels, blocks, stride=1):
+        downsample = None
+        if (stride != 1) or (self.in_channels != out_channels):
+            downsample = torch.nn.Sequential(
+                conv3x3(self.in_channels, out_channels, stride=stride),
+                torch.nn.BatchNorm2d(out_channels))
+        layers = []
+        layers.append(block(self.in_channels, out_channels, stride, downsample))
+        self.in_channels = out_channels
+        for i in range(1, blocks):
+            layers.append(block(out_channels, out_channels))
+        return torch.nn.Sequential(*layers)
 
     def forward(self, x):
         out = self.layer1(x)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        # print(out.size())
         out = out.view(out.size(0), -1)
         out = self.fc1(out)
         out = self.relu(out)
@@ -476,7 +495,8 @@ class SynthesisBlock(torch.nn.Module):
         # Input.
         if self.in_channels == 0:
             x = x.to(dtype=dtype, memory_format=memory_format)
-            x = x.unsqueeze(0).repeat([ws.shape[0], 1, 1, 1])
+            print(x.size(), ws.size())
+            # x = x.unsqueeze(0).repeat([ws.shape[0], 1, 1, 1])
         else:
             misc.assert_shape(x, [None, self.in_channels, self.resolution // 2, self.resolution // 2])
             x = x.to(dtype=dtype, memory_format=memory_format)
@@ -525,14 +545,14 @@ class SynthesisNetwork(torch.nn.Module):
         self.img_resolution = img_resolution
         self.img_resolution_log2 = int(np.log2(img_resolution))
         self.img_channels = img_channels
-        self.block_resolutions = [2 ** i for i in range(4, self.img_resolution_log2 + 1)] ## initial image is 16*16
+        self.block_resolutions = [2 ** i for i in range(5, self.img_resolution_log2 + 1)] ## initial image is 16*16
         channels_dict = {res: min(channel_base // res, channel_max) for res in self.block_resolutions}
         fp16_resolution = max(2 ** (self.img_resolution_log2 + 1 - num_fp16_res), 8)
         self.pose_encoder = PNet()
 
         self.num_ws = 0
         for res in self.block_resolutions:
-            in_channels = channels_dict[res // 2] if res > 16 else 0
+            in_channels = channels_dict[res // 2] if res > 32 else 0
             out_channels = channels_dict[res]
             use_fp16 = (res >= fp16_resolution)
             is_last = (res == self.img_resolution)
@@ -576,6 +596,7 @@ class Generator(torch.nn.Module):
     ):
         super().__init__()
         self.z_dim = z_dim
+        print(self.z_dim, "!!!!")
         self.c_dim = c_dim
         self.w_dim = w_dim
         self.img_resolution = img_resolution
@@ -583,7 +604,7 @@ class Generator(torch.nn.Module):
         self.synthesis = SynthesisNetwork(w_dim=w_dim, img_resolution=img_resolution, img_channels=img_channels, **synthesis_kwargs)
         self.num_ws = self.synthesis.num_ws
         self.mapping = MappingNetwork(z_dim=z_dim, c_dim=c_dim, w_dim=w_dim, num_ws=self.num_ws, **mapping_kwargs)
-        self.ANet = ANet()
+        self.ANet = ANet(out_channels=z_dim)
 
     def forward(self, A, P, c, truncation_psi=1, truncation_cutoff=None, **synthesis_kwargs):
         z = self.ANet(A)

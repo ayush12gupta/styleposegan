@@ -264,9 +264,9 @@ def training_loop(
             phase_img_s = (phase_img_s.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
             phase_img_t = (phase_img_t.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
             phase_ap_s = (phase_ap_s.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
-            phase_ap_s = (phase_ap_t.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
+            phase_ap_t = (phase_ap_t.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
             phase_pose_s = (phase_pose_s.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
-            phase_pose_s = (phase_pose_t.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
+            phase_pose_t = (phase_pose_t.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
             
             phase_real_c = phase_real_c.to(device).split(batch_gpu)
             # all_gen_z = torch.randn([len(phases) * batch_size, G.z_dim], device=device)
