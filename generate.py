@@ -43,12 +43,14 @@ def num_range(s: str) -> List[int]:
 @click.option('--noise-mode', help='Noise mode', type=click.Choice(['const', 'random', 'none']), default='const', show_default=True)
 @click.option('--projected-w', help='Projection result file', type=str, metavar='FILE')
 @click.option('--outdir', help='Where to save the output images', type=str, required=True, metavar='DIR')
+@click.option('--inpdir', help='Where to take the input images from', type=str, required=True, metavar='DIR')
 def generate_images(
     ctx: click.Context,
     network_pkl: str,
     seeds: Optional[List[int]],
     truncation_psi: float,
     noise_mode: str,
+    inpdir: str,
     outdir: str,
     class_idx: Optional[int],
     projected_w: Optional[str]
@@ -112,11 +114,19 @@ def generate_images(
         if class_idx is not None:
             print ('warn: --class=lbl ignored when running on an unconditional network')
 
+    pose = inpdir + '/pose'
+    ap = inpdir + '/ap'
+    inps = os.listdir(pose)
     # Generate images.
-    for seed_idx, seed in enumerate(seeds):
-        print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))
-        z = torch.from_numpy(np.random.RandomState(seed).randn(1, G.z_dim)).to(device)
-        img = G(z, label, truncation_psi=truncation_psi, noise_mode=noise_mode)
+    seed = seeds[0]
+    for seed_idx, inp in enumerate(inps):
+        print('Generating image for seed %d (%d/%d) ...' % (inp, seed_idx, len(seeds)))
+        # z = torch.from_numpy(np.random.RandomState(seed).randn(1, G.z_dim)).to(device)
+        pose_img = np.transpose(np.array(PIL.Image.open(pose + inp)), (2, 0, 1))
+        pose_img = (torch.from_numpy(pose_img).to(torch.float32) / 127.5 - 1).to(device).unsqueeze(0)
+        ap_img = np.transpose(np.array(PIL.Image.open(ap + inp)), (2, 0, 1))
+        ap_img = (torch.from_numpy(ap_img).to(torch.float32) / 127.5 - 1).to(device).unsqueeze(0)
+        img = G(ap_img, pose_img, label, truncation_psi=truncation_psi, noise_mode=noise_mode)
         img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
         PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/seed{seed:04d}.png')
 
