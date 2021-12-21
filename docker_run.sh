@@ -20,7 +20,7 @@ set -e
 # ./docker_run.sh python generate.py --help
 #
 # To override the default `stylegan2ada:latest` image, run:
-#
+# !python train.py --outdir=../training-runs --data=../dataset/img_highres/ --snap 1 --gpus=1 --batch 4 --augpipe=bg --gamma=10 --cfg=stylegan2 --mirror=0 --metrics=none
 # IMAGE=my_image:v1.0 ./docker_run.sh python generate.py --help
 #
 

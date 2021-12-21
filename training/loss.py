@@ -109,6 +109,7 @@ class StyleGAN2Loss(Loss):
         do_Dmain = (phase in ['Dmain', 'Dboth'])
         do_Dr1   = (phase in ['Dreg', 'Dboth']) and (self.r1_gamma != 0)
         do_GPercep = (phase in ['Gmain', 'Gboth'])
+        l1_weight = 15
 
         loss_l1 = loss_vgg = loss_Dgen = loss_Gmain = loss_Dreal = None
         # Gmain: Maximize logits for generated images.
@@ -116,8 +117,8 @@ class StyleGAN2Loss(Loss):
             with torch.autograd.profiler.record_function('Gmain_forward'):
                 gen_img_s, _gen_ws = self.run_G(pose_s, ap_s, gen_c, sync=(sync)) # May get synced by Gpl.
                 gen_img_t, _gen_ws = self.run_G(pose_t, ap_s, gen_c, sync=(sync)) # May get synced by Gpl.
-                loss_l1_s = abs(torch.nn.functional.l1_loss(img_s, gen_img_s))#*l1_weight
-                loss_l1_t = abs(torch.nn.functional.l1_loss(img_t, gen_img_t))#*l1_weight
+                loss_l1_s = abs(torch.nn.functional.l1_loss(img_s, gen_img_s))*l1_weight
+                loss_l1_t = abs(torch.nn.functional.l1_loss(img_t, gen_img_t))*l1_weight
                 loss_l1 = loss_l1_s + loss_l1_t
                 loss_vgg = self.vgg_loss(img_s, gen_img_s) + self.vgg_loss(img_s, gen_img_s)
                 training_stats.report('Loss/G/L1_loss', loss_l1)
