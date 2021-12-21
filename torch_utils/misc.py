@@ -180,6 +180,7 @@ def check_ddp_consistency(module, ignore_regex=None):
     assert isinstance(module, torch.nn.Module)
     for name, tensor in named_params_and_buffers(module):
         fullname = type(module).__name__ + '.' + name
+        print(fullname)
         if ignore_regex is not None and re.fullmatch(ignore_regex, fullname):
             continue
         tensor = tensor.detach()
