@@ -180,7 +180,7 @@ class StyleGAN2Loss(Loss):
                 loss_l1_s = abs(torch.nn.functional.l1_loss(img_s, gen_img_s))*l1_weight
                 loss_l1_t = abs(torch.nn.functional.l1_loss(img_t, gen_img_t))*l1_weight
                 loss_l1 = loss_l1_s + loss_l1_t
-                loss_vgg = self.vgg_loss(img_s, gen_img_s) + self.vgg_loss(img_s, gen_img_s)
+                loss_vgg = self.vgg_loss(img_s, gen_img_s) + self.vgg_loss(img_s, gen_img_s)*0.01
                 training_stats.report('Loss/G/L1_loss', loss_l1)
                 training_stats.report('Loss/G/Perceptual', loss_vgg)
                 # training_stats.report('Loss/G/loss', loss_Gmain)
