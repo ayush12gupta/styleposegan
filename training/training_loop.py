@@ -323,7 +323,7 @@ def training_loop(
         cur_nimg += batch_size
         batch_idx += 1
 
-        if cur_nimg%100:
+        if cur_nimg%99==0:
             div = cur_nimg%999
             log = "king: {cur_nimg}  L1 loss: {l1}  Perceptual loss: {vgg}  G_main: {gmain}  D_gen: {dgen}  D_real: {dreal}".format(cur_nimg=cur_nimg/1e3, l1=l1_Loss/div, vgg=vggLoss/div, gmain=gmainLoss/div, dgen=dgenLoss/div, dreal=drealLoss/div)
             print(log)
