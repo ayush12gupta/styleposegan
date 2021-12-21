@@ -72,7 +72,7 @@ class Vgg16(torch.nn.Module):
         recon = y_features[1]
         recon_hat = y_hat_features[1]
         content_loss = self.CONTENT_WEIGHT * self.loss_mse(recon_hat, recon)
-        aggregate_content_loss += content_loss.data*10
+        aggregate_content_loss += content_loss.data
         return aggregate_content_loss#.to(device)
 
 # class VGGPerceptualLoss(torch.nn.Module):
@@ -180,7 +180,7 @@ class StyleGAN2Loss(Loss):
                 loss_l1_s = abs(torch.nn.functional.l1_loss(img_s, gen_img_s))*l1_weight
                 loss_l1_t = abs(torch.nn.functional.l1_loss(img_t, gen_img_t))*l1_weight
                 loss_l1 = loss_l1_s + loss_l1_t
-                loss_vgg = self.vgg_loss(img_s, gen_img_s) + self.vgg_loss(img_s, gen_img_s)*0.01
+                loss_vgg = (self.vgg_loss(img_s, gen_img_s) + self.vgg_loss(img_s, gen_img_s))*0.01
                 training_stats.report('Loss/G/L1_loss', loss_l1)
                 training_stats.report('Loss/G/Perceptual', loss_vgg)
                 # training_stats.report('Loss/G/loss', loss_Gmain)
