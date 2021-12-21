@@ -48,6 +48,7 @@ try:
 except AttributeError:
     def nan_to_num(input, nan=0.0, posinf=None, neginf=None, *, out=None): # pylint: disable=redefined-builtin
         assert isinstance(input, torch.Tensor)
+        print(input.dtype)
         if posinf is None:
             posinf = torch.finfo(input.dtype).max
         if neginf is None:
