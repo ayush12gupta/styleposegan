@@ -60,9 +60,8 @@ def setup_snapshot_image_grid(training_set, random_seed=0):
             label_groups[label] = [indices[(i + gw) % len(indices)] for i in range(len(indices))]
 
     # Load data.
-    images, labels = zip(*[training_set[i] for i in grid_indices])
-    return (gw, gh), np.stack(images), np.stack(labels)
-
+    img_s, img_t, A_s, A_t, P_s, P_t, labels = zip(*[training_set[i] for i in grid_indices])
+    return (gw, gh), np.stack(img_s), np.stack(img_t), np.stack(A_s), np.stack(A_t), np.stack(P_s), np.stack(P_t), np.stack(labels)
 #----------------------------------------------------------------------------
 
 def save_image_grid(img, fname, drange, grid_size):
@@ -324,7 +323,20 @@ def training_loop(
         cur_nimg += batch_size
         batch_idx += 1
 
-
+        if cur_nimg%100:
+            div = cur_nimg%999
+            log = "king: {cur_nimg}  L1 loss: {l1}  Perceptual loss: {vgg}  G_main: {gmain}  D_gen: {dgen}  D_real: {dreal}".format(cur_nimg=cur_nimg/1e3, l1=l1_Loss/div, vgg=vggLoss/div, gmain=gmainLoss/div, dgen=dgenLoss/div, dreal=drealLoss/div)
+            print(log)
+        
+        if cur_nimg%999==0:
+            l1_Loss /= 999
+            vggLoss /= 999
+            drealLoss /= 999
+            gmainLoss /= 999
+            dgenLoss /= 999
+            log = "king: {cur_nimg}  L1 loss: {l1}  Perceptual loss: {vgg}  G_main: {gmain}  D_gen: {dgen}  D_real: {dreal}".format(cur_nimg=cur_nimg/1e3, l1=l1_Loss, vgg=vggLoss, gmain=gmainLoss, dgen=dgenLoss, dreal=drealLoss)
+            print(log)
+            l1_Loss, vggLoss, drealLoss, gmainLoss, dgenLoss = 0, 0, 0, 0, 0
 
         # Execute ADA heuristic.
         if (ada_stats is not None) and (batch_idx % ada_interval == 0):
@@ -362,15 +374,6 @@ def training_loop(
                 print()
                 print('Aborting...')
         
-        if cur_nimg%1e3==0:
-            l1_Loss /= 1e3
-            vggLoss /= 1e3
-            drealLoss /= 1e3
-            gmainLoss /= 1e3
-            dgenLoss /= 1e3
-            log = "king: {cur_nimg}  L1 loss: {l1}  Perceptual loss: {vgg}  G_main: {gmain}  D_gen: {dgen}  D_real: {dreal}".format(cur_nimg=cur_nimg/1e3, l1=l1_Loss, vgg=vggLoss, gmain=gmainLoss, dgen=dgenLoss, dreal=drealLoss)
-            print(log)
-            l1_Loss, vggLoss, drealLoss, gmainLoss, dgenLoss = 0, 0, 0, 0, 0
 
         # Save image snapshot.
         if (rank == 0) and (image_snapshot_ticks is not None) and (done or cur_tick % image_snapshot_ticks == 0):
